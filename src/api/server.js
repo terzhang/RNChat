@@ -1,9 +1,10 @@
 import axios from 'axios';
 import { AsyncStorage } from 'react-native';
+import serverUri from '../constants/serverUri';
 
 // create a client connection to the server
 const server = axios.create({
-  baseURL: 'http://68558e00.ngrok.io' // change this before deployment
+  baseURL: serverUri
 });
 
 // get jwtoken from storage

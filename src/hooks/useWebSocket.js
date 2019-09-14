@@ -3,6 +3,7 @@ import { YellowBox } from 'react-native';
 import io from 'socket.io-client';
 import { Context as MessageContext } from '../context/MessageContext';
 import { Context as AuthContext } from '../context/AuthContext';
+import serverUri from '../constants/serverUri';
 
 // weird yellowbox bug
 YellowBox.ignoreWarnings([
@@ -15,7 +16,8 @@ const useWebSocket = (event = 'chat message') => {
 
   // connect to socket.io backend through ngrok
   const [socket, setSocket] = React.useState(
-    io('http://37718b25.ngrok.io', {
+    io(
+      serverUri /* , {
       transportOptions: {
         polling: {
           extraHeaders: {
@@ -23,7 +25,8 @@ const useWebSocket = (event = 'chat message') => {
           }
         }
       }
-    })
+    } */
+    )
   );
 
   const { addMessage } = React.useContext(MessageContext);
