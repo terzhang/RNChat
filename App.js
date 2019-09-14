@@ -6,6 +6,7 @@ import { createStackNavigator } from 'react-navigation-stack';
 import ChatScreen from './src/screens/ChatScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import ContactListScreen from './src/screens/ContactListScreen';
+import { Provider as AuthProvider } from './src/context/AuthContext';
 
 const mainFlow = createStackNavigator({
   ContactList: {
@@ -29,11 +30,13 @@ const AppContainer = createAppContainer(authFlow);
 
 const App = () => {
   return (
-    <ContactProvider>
-      <MessageProvider>
-        <AppContainer />
-      </MessageProvider>
-    </ContactProvider>
+    <AuthProvider>
+      <ContactProvider>
+        <MessageProvider>
+          <AppContainer />
+        </MessageProvider>
+      </ContactProvider>
+    </AuthProvider>
   );
 };
 
