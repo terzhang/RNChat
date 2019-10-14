@@ -1,3 +1,3 @@
 // change this before deployment
-const url = 'http://e41e8a20.ngrok.io';
+const url = 'http://f26507fd.ngrok.io';
 export default url;

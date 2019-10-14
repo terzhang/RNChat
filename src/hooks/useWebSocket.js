@@ -52,7 +52,7 @@ const useWebSocket = (event = 'chat message') => {
     return () => {
       socket.close();
     }; // clean up on unmount
-    // ! this side effect must only be called once. So much frustrating figuring why it kept reconnecting or disconnecting.  >_<
+    // ! this side effect must only be called once. So much frustration figuring why it kept reconnecting or disconnecting.  >_<
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

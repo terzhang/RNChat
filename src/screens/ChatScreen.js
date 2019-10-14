@@ -18,17 +18,44 @@ const id = String(randomId());
 const screenWidth = Math.round(Dimensions.get('window').width);
 const screenHeight = Math.round(Dimensions.get('window').height);
 
-const ChatScreen = () => {
+const ChatScreen = ({ navigation }) => {
   const [input, setInput] = useState('');
   const [usersTyping, setUsersTyping] = useState([]);
   const [typingIndicatorText, setTypingIndicatorText] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
-  const [debouncedValue] = useDebounce(input, 500); // debounce input whenever input changes
-  const { state, addMessage } = React.useContext(MessageContext);
+
   const [socket] = useWebSocket();
+  const { state, addMessage } = React.useContext(MessageContext);
   const {
-    state: { email }
+    state: { email, userId }
   } = React.useContext(AuthContext);
+
+  /* const [roomId, setRoomId] = useState('');
+
+  React.useEffect(() => {
+    const id = navigation.getParam('id', null);
+    const roomId = id + '&&' + email;
+    socket.emit('joinRoom', {username:email, roomId: roomId});
+    // find the contact in state via id
+    // state.find(element => {
+    //   return element._id === id;
+    // });
+  }, [navigation, email, socket]); */
+
+  const callbackAfterDebounce = () => {
+    if (isTyping) {
+      setIsTyping(false);
+      // tell other users we've stopped
+      socket.emit('isNotTyping', {
+        user: email,
+        message: 'is not typing...'
+      });
+      console.log('stopped typing');
+    }
+  };
+
+  // debounce input whenever input changes
+  const [debouncedValue] = useDebounce(input, 1000, callbackAfterDebounce);
 
   // generate a typing message from the users typing.
   const makeTypingMessage = users => {
@@ -50,6 +77,15 @@ const ChatScreen = () => {
 
   // adding listener to the opened socket
   React.useEffect(() => {
+    // see ContactContext for the shape of contact.
+    const contact = navigation.getParam('contact', null);
+
+    socket.emit('joinRoom', {
+      username: email,
+      userId,
+      contactId: contact._id
+    });
+
     // listen when other users are typing and make indicator text
     socket.on('notifyTyping', data => {
       setUsersTyping([...usersTyping, data.user]); // new user to state
@@ -63,29 +99,27 @@ const ChatScreen = () => {
       setUsersTyping(newUsersTyping);
       setTypingIndicatorText(makeTypingMessage(newUsersTyping)); // make new typing message
     });
+
+    socket.on('updateRoom', data => {
+      console.log('Room Update: ', data);
+    });
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleTextChange = text => {
+    // update input state
     setInput(text);
-    // tell socket we're typing while input text is newer
-    // if input text is newer means text is debouncing in a delay
-    if (debouncedValue != text) {
+    // debouncedValue will debounce on a delay when input change and ...
+    // the delay timer will reset if input change before timer finishes.
+    // debouncedValue stops debouncing (catch up to input) after timer finishes.
+    if (debouncedValue != input) {
       // if we didn't emit that we're typing, emit it.
       if (!isTyping) {
+        console.log('we are typing');
         setIsTyping(true);
-        socket.emit('isTyping', () => {
-          return { user: email, message: 'is typing...' };
-        });
+        socket.emit('isTyping', { user: email, message: 'is typing...' });
       }
-    } else {
-      // once the text finishes debouncing and catch up with input text...
-      // we've stopped typing
-      setIsTyping(false);
-      // tell other users we've stopped
-      socket.emit('isNotTyping', () => {
-        return { user: email, message: 'is not typing...' };
-      });
     }
   };
 
@@ -129,7 +163,7 @@ const ChatScreen = () => {
 
 ChatScreen.navigationOptions = ({ navigation }) => {
   return {
-    title: navigation.getParam('user').name
+    title: navigation.getParam('contact').name
   };
 };
 
@@ -137,18 +171,5 @@ const styles = StyleSheet.create({
   backgroundContainer: { flex: 1, width: screenWidth, height: screenHeight },
   image: { opacity: 0.35, resizeMode: 'stretch' }
 });
+
 export default ChatScreen;
-
-/* React.useEffect(() => {
-    const id = navigation.getParam('id', null);
-    console.log(id);
-
-    // find the contact in state via id
-    state.find(element => {
-      return element._id === id;
-    });
-  }, [navigation, state]); */
-
-/* React.useEffect(() => {
-    socket.connect();
-  }, []); */
